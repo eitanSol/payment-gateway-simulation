@@ -3,13 +3,18 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www"
+    "start": "node ./bin/www",
+    "test": "mocha"
   },
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
+    "chai": "^4.3.4",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "express": "~4.16.1",
-    "morgan": "~1.9.1"
+    "joi": "^17.4.0",
+    "mocha": "^8.3.2",
+    "morgan": "~1.9.1",
+    "request": "^2.88.2"
   }
 }
