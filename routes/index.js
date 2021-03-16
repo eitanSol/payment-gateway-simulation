@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const joi = require('joi');
+const clients = require('../clients');
 
 const router = express.Router();
 
@@ -19,6 +20,7 @@ router.get('/healthcheck', async (req, res, next) => {
     return res.json({ status: 'ERR', message: err.response.statusText})
   }
 });
+
 postChargeSchema = joi.object({
   body: joi.object({
     fullName: joi.string().required(),
@@ -35,7 +37,6 @@ postChargeSchema = joi.object({
 
 router.post('/api/charge', async (req, res, next) => {
   try {
-    console.log(req.body)
     const value = await postChargeSchema.validateAsync({
       body: req.body,
       headers: req.headers,
@@ -43,11 +44,22 @@ router.post('/api/charge', async (req, res, next) => {
   }
   catch (err) {
     res.status(400).send()
+    console.log(err)
     return next()
   }
-  
-  res.status(200).send()
-  next()
+  try {
+    const result = await clients[req.body.creditCardCompany](req.headers["merchant-identifier"], req.body)
+    if (result.chargeResult == "Failure") {
+      res.status(200).send({ error: "Card declined" })
+      return next()
+    }
+    res.status(200).send()
+    next()
+  }
+  catch (err) {
+    console.log(err)
+    res.status(500).send()
+  }
 });
 
 
