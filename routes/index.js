@@ -37,7 +37,7 @@ postChargeSchema = joi.object({
 
 router.post('/api/charge', async (req, res, next) => {
   try {
-    const value = await postChargeSchema.validateAsync({
+    await postChargeSchema.validateAsync({
       body: req.body,
       headers: req.headers,
     });
@@ -48,7 +48,9 @@ router.post('/api/charge', async (req, res, next) => {
     return next()
   }
   try {
-    const result = await clients[req.body.creditCardCompany](req.headers["merchant-identifier"], req.body)
+    const identifier = req.headers["merchant-identifier"];
+    const componyRequest = clients[req.body.creditCardCompany].bind(clients, identifier, req.body)
+    const result = await retry(componyRequest, 3)
     if (result.chargeResult == "Failure") {
       res.status(200).send({ error: "Card declined" })
       return next()
@@ -62,5 +64,24 @@ router.post('/api/charge', async (req, res, next) => {
   }
 });
 
+async function retry(func, maxAttempts, attempt=0 ) {
+  try {
+    return await func()
+  }
+  catch (err) {
+    attempt++
+    if (attempt == maxAttempts) {
+      throw err
+    }
+    await delay(1000*attempt**2)
+    return await retry(func, maxAttempts, attempt)
+  }
+}
+
+function delay(t) {
+  return new Promise(function(resolve) {
+      setTimeout(resolve, t)
+  });
+}
 
 module.exports = router;
